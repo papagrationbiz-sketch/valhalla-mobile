@@ -162,6 +162,19 @@ public:
     }
 }
 
+- (NSString*)traceAttributes:(NSString*)request
+{
+    @synchronized(self) {
+        // Convert the NSString to std::string
+        std::string req = std::string([request UTF8String]);
+        
+        // Generate the valhalla response
+        std::string res = trace_attributes(req.c_str(), _actor);
+        
+        return [NSString stringWithUTF8String:res.c_str()];
+    }
+}
+
 - (void) dealloc
 {
     delete_valhalla_actor(_actor);
