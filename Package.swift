@@ -2,7 +2,7 @@
 import PackageDescription
 
 // Use the local binary if true
-let useLocalBinary = Context.environment["VALHALLA_MOBILE_DEV"].flatMap(Bool.init) ?? false
+let useLocalBinary = true
 
 // Use the local binary
 var binaryTarget: Target = .binaryTarget(
