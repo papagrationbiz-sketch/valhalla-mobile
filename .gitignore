@@ -6,7 +6,7 @@
 /android/build/
 /android/.kotlin
 .DS_Store
-/build
+# /build  <-- Allow our specialized build artifact
 /protoc
 /captures
 .externalNativeBuild
@@ -25,7 +25,7 @@ DerivedData/
 *.xcodeproj
 
 # Artifacts
-valhalla-wrapper.xcframework
+# valhalla-wrapper.xcframework  <- Allow this to be committed
 valhalla-wrapper.xcframework.zip
 libvalhalla-wrapper.so
 
