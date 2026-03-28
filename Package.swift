@@ -2,25 +2,25 @@
 import PackageDescription
 
 // Use the local binary if true
-let useLocalBinary = true
-
-// Use the local binary
-var binaryTarget: Target = .binaryTarget(
-    name: "ValhallaWrapper",
-    path: "build/apple/valhalla-wrapper.xcframework"
-)
+let useLocalBinary = false   // ← 手元のファイルではなくネットからダウンロードする設定
 
 // CI will replace the nils with the actual values when building a release
-let version: String = "0.5.0"
+let version: String = "0.5.1"   // ← リリースタグに更新
 let binaryURL: String =
-    "https://github.com/Rallista/valhalla-mobile/releases/download/\(version)/valhalla-wrapper.xcframework.zip"
-let binaryChecksum: String = "1adb72fb7f49c9cf42de52190e7f993c2bf5b83d7a6b3551e327ff7a8d9e38d9"
+    "https://github.com/papagrationbiz-sketch/valhalla-mobile/releases/download/\(version)/valhalla-wrapper.xcframework.zip"
+let binaryChecksum: String = "215c4b8a89a4b973ae4645b33fa6e9d118dd20fa0e41cb68afd2e74c05b8d829"
 
-if !useLocalBinary {
+// Binary target 設定
+var binaryTarget: Target = .binaryTarget(
+    name: "ValhallaWrapper",
+    url: binaryURL,
+    checksum: binaryChecksum
+)
+
+if useLocalBinary {
     binaryTarget = .binaryTarget(
         name: "ValhallaWrapper",
-        url: binaryURL,
-        checksum: binaryChecksum
+        path: "build/apple/valhalla-wrapper.xcframework"
     )
 }
 
