@@ -3,8 +3,28 @@ name: iOS 26
 on:
   push:
     branches: [main]
+    paths:
+      - 'apple/**'
+      - 'src/**'
+      - 'CMakeLists.txt'
+      - 'build.sh'
+      - 'scripts/**'
+      - 'Package.swift'
+      - '.github/workflows/ios26.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'apple/**'
+      - 'src/**'
+      - 'CMakeLists.txt'
+      - 'build.sh'
+      - 'scripts/**'
+      - 'Package.swift'
+      - '.github/workflows/ios26.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -12,9 +32,6 @@ jobs:
     strategy:
       matrix:
         arch: ["arm64-ios", "arm64-ios-simulator", "x64-ios-simulator"]
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-ios26-build-${{ matrix.arch }}
-      cancel-in-progress: true
 
     steps:
       - name: Checkout Valhalla
@@ -78,9 +95,6 @@ jobs:
   test:
     needs: create-xcframework
     runs-on: macos-26
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-ios26-test
-      cancel-in-progress: true
     strategy:
       matrix:
         scheme: [ValhallaMobile]

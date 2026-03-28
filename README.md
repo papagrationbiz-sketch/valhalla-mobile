@@ -3,10 +3,8 @@
 [![Valhalla](https://img.shields.io/badge/Valhalla-3.6.2-blue)](https://github.com/valhalla/valhalla/releases/tag/3.6.2)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FRallista%2Fvalhalla-mobile%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/Rallista/valhalla-mobile)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FRallista%2Fvalhalla-mobile%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/Rallista/valhalla-mobile)
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.rallista/valhalla-mobile)](https://central.sonatype.com/artifact/io.github.rallista/valhalla-mobile)
-[![Kotlin Docs](https://img.shields.io/badge/Kotlin%20Dokka-purple?logo=kotlin)](https://rallista.github.io/valhalla-mobile/)
 
-This project builds [valhalla](https://github.com/valhalla/valhalla) as a static iOS or shared Android library.
+This project builds [valhalla](https://github.com/valhalla/valhalla) as a static iOS library.
 
 It currently only exposes the route function for the primary purpose of generating turn by turn navigation routes
 using a downloaded pre-parsed valhalla tileset.
@@ -17,33 +15,6 @@ If you've got questions, would like to have informal discussions, or just want t
 to reach out on the OpenStreetMap Slack (osmus.slack.com) under the [#valhalla-mobile](`https://osmus.slack.com/archives/C08N6SUNZTJ`) channel.
 
 ## Setup
-
-### Android
-
-Using a `libs.versions.toml` with a `build.gradle.kts`
-
-```toml
-[verisons]
-valhallaMobile = "0.1.0"
-[libraries]
-valhalla-mobile = { group = "io.github.rallista", name = "valhalla-mobile", version.ref = "valhallaMobile" }
-```
-
-```kts
-implementation(libs.valhalla.mobile)
-```
-
-Using a standard `build.gradle.kts`
-
-```kts
-implementation("io.github.rallista:valhalla-mobile:0.1.0")
-```
-
-Using a standard `build.gradle`
-
-```
-implementation 'io.github.rallista:valhalla-mobile:0.1.0'
-```
 
 ### iOS
 
@@ -86,18 +57,6 @@ On iOS, you must pre-build the xcframework using the command:
 
 ```sh
 ./build.sh ios clean
-```
-
-### Android
-
-**Prerequisites:** See [development.md](docs/development.md), specifically 
-setting up NDK `29.0.14206865` to match CI.
-
-The project's build.gradle.kts includes a build task that automatically runs the script below selectively per architecture.
-It's also possible to run this manually:
-
-```sh
-./build.sh android clean
 ```
 
 ## Valhalla Fork

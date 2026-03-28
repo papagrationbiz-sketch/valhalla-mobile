@@ -2,7 +2,7 @@
 import PackageDescription
 
 // Use the local binary if true
-let useLocalBinary = true   // ← 手元のファイル（GitHubに直接コミットする実ファイル）を使う設定
+let useLocalBinary = false   // ← 手元のファイル（GitHubに直接コミットする実ファイル）を使う設定
 
 // CI will replace the nils with the actual values when building a release
 let version: String = "0.5.2"   // ← 最新のリリースに合わせる
