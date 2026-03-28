@@ -63,6 +63,9 @@ let package = Package(
             name: "ValhallaObjc",
             dependencies: ["ValhallaWrapper"],
             path: "apple/Sources/ValhallaObjc",
+            cxxSettings: [
+                .headerSearchPath("../../../src/wrapper")
+            ],
             linkerSettings: [.linkedLibrary("z")]
         ),
         binaryTarget,
