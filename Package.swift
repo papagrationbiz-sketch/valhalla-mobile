@@ -25,7 +25,7 @@ if useLocalBinary {
 }
 
 let package = Package(
-    name: "ValhallaMobile",
+    name: "valhalla-mobile",
     platforms: [
         .iOS("16.4")
         // .tvOS(.v13),
@@ -68,6 +68,7 @@ let package = Package(
             ],
             linkerSettings: [.linkedLibrary("z")]
         ),
+        binaryTarget,
         .testTarget(
             name: "ValhallaTests",
             dependencies: ["Valhalla"],
