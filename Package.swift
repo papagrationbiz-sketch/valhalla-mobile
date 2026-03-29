@@ -5,10 +5,10 @@ import PackageDescription
 let useLocalBinary = false   // ← 手元のファイル（GitHubに直接コミットする実ファイル）を使う設定
 
 // CI will replace the nils with the actual values when building a release
-let version: String = "0.5.3"
+let version: String = "0.5.4"
 let binaryURL: String =
     "https://github.com/papagrationbiz-sketch/valhalla-mobile/releases/download/\(version)/valhalla-wrapper.xcframework.zip"
-let binaryChecksum: String = "253db3469a76d2502c3d9c11bf2ff4bdf97540f4cdcdb9ea7f8ab86bd15538c0"
+let binaryChecksum: String = "0a84914c9ec8575b62cc71640091cfb5bc95d1928543986d430c125b400031f4"
 
 // Binary target 設定
 var binaryTarget: Target = .binaryTarget(
