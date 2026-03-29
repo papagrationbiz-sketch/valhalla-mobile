@@ -34,8 +34,8 @@ let package = Package(
     ],
     products: [
         .library(
-            name: "Valhalla",
-            targets: ["Valhalla"]
+            name: "valhalla-mobile",
+            targets: ["Valhalla", "ValhallaObjc", "ValhallaWrapper"]
         )
     ],
     dependencies: [
@@ -49,7 +49,6 @@ let package = Package(
             name: "Valhalla",
             dependencies: [
                 "ValhallaObjc",
-                "ValhallaWrapper",
                 .product(name: "ValhallaConfigModels", package: "valhalla-openapi-models-swift"),
                 .product(name: "ValhallaModels", package: "valhalla-openapi-models-swift"),
                 .product(name: "Light-Swift-Untar", package: "Light-Swift-Untar"),
