@@ -1,6 +1,6 @@
 import Foundation
 
-struct ValhallaErrorModel: Codable {
-    let code: Int
-    let message: String
+public struct ValhallaErrorModel: Codable {
+    public let code: Int
+    public let message: String
 }
