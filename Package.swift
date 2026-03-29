@@ -34,7 +34,7 @@ let package = Package(
     ],
     products: [
         .library(
-            name: "valhalla-mobile",
+            name: "Valhalla",
             targets: ["Valhalla", "ValhallaObjc", "ValhallaWrapper"]
         )
     ],
