@@ -68,7 +68,6 @@ let package = Package(
             ],
             linkerSettings: [.linkedLibrary("z")]
         ),
-        binaryTarget,
         .testTarget(
             name: "ValhallaTests",
             dependencies: ["Valhalla"],
