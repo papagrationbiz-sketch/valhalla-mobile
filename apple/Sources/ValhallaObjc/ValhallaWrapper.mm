@@ -1,6 +1,6 @@
 #import "ValhallaWrapper.h"
 
-#import <include/main.h>
+#import "main.h"
 #import <Foundation/Foundation.h>
 
 /**
