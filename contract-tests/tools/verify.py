@@ -189,10 +189,20 @@ def compare_performance(
         if baseline[identity] != candidate[identity]:
             raise VerificationError(f"{identity}: candidate and baseline differ")
 
+    if baseline.get("platform") != candidate.get("platform"):
+        raise VerificationError("platform: candidate and baseline differ")
+
     baseline_metrics = baseline["metrics"]
     candidate_metrics = candidate["metrics"]
+    # absolute_slack is an absolute allowance, so it cannot be shared across
+    # platforms whose numbers differ by an order of magnitude: the CI Android
+    # emulator routes in ~15 ms where the iOS simulator takes ~2 ms, and one
+    # slack generous enough for the former hides a doubling of the latter.
+    overrides = thresholds.get("platforms", {}).get(candidate.get("platform"), {})
+    override_metrics = overrides.get("metrics", {})
     failures: list[str] = []
-    for metric, policy in thresholds["metrics"].items():
+    for metric, default_policy in thresholds["metrics"].items():
+        policy = {**default_policy, **override_metrics.get(metric, {})}
         expected = float(baseline_metrics[metric])
         actual = float(candidate_metrics[metric])
         limit = expected * (1.0 + float(policy["max_regression"])) + float(

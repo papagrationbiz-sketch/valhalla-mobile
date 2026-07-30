@@ -1,0 +1,1 @@
+{"fixture_id": "andorra-v1", "metrics": {"cold_route_ms": 3.327916, "failures": 0, "iterations": 100, "peak_rss_mb": 183.40625, "warm_route_ms_p50": 2.0028125}, "platform": "ios", "schema_version": 1, "tile_sha256": "02e68c8cdb1e8ac9379855ac7bee2da21ee9240b1c314fbf5e2bf98c77f45cfd", "valhalla_commit": "13eb61624f9b6464dbaad5081e9fd71207ec539c"}

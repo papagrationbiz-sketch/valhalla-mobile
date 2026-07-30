@@ -54,19 +54,25 @@ python3 contract-tests/tools/verify.py compare-performance \
 ## Recorded baselines
 
 `contract-tests/baselines/<platform>.json` holds the measurement a CI run actually
-produced, and every later run is compared against it. Baselines are per platform because
-the numbers are specific to the runner: the same commit measured `warm_route_ms_p50` at
-14.6 ms on the CI x86_64 emulator and 2.6 ms on a local arm64 emulator.
+produced, and every later run is compared against it. A comparison across platforms is
+refused: the runner dominates the numbers. The same commit and the same tiles give
+`warm_route_ms_p50` of 14.6 ms on the CI x86_64 Android emulator and 2.0 ms in the iOS
+simulator on Apple silicon.
 
-The thresholds are calibrated against those recorded baselines rather than against
-estimates. On the current Android baseline they reject a doubling of any metric while
-absorbing roughly 15-39% of run-to-run movement. They were previously set for
-placeholder numbers about forty times slower, which left `cold_route_ms` with 253%
-headroom — a doubling passed the gate.
+That spread is also why `absolute_slack` is per platform. It is an absolute allowance,
+so a value generous enough for the Android emulator hides a doubling on iOS — with the
+Android slack of 2.0 ms an iOS regression from 2.0 ms to 4.0 ms still passes. Defaults in
+`metrics` are the Android values; `platforms.<platform>.metrics` overrides individual
+fields, and only the timing slacks need it. `max_regression` is relative and stays shared.
+
+The thresholds are calibrated against the recorded baselines rather than estimates. They
+reject a doubling of any metric on either platform while absorbing about 25% of
+run-to-run movement. They were previously set for placeholder numbers roughly forty times
+slower, which left Android `cold_route_ms` with 253% headroom — a doubling passed.
 
 Update a baseline only when a change is meant to move the numbers, and say why in the
-commit. Note that the current calibration rests on a single CI sample per platform, so
-the noise allowance is an estimate until several runs have been recorded.
+commit. The calibration rests on a single CI sample per platform, so the noise allowance
+is an estimate until several runs have been recorded.
 
 ## Integration dependency
 

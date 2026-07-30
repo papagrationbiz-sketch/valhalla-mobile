@@ -17,6 +17,12 @@ on:
 permissions:
   contents: read
 
+# The wrapper build makes this the longest job in the repository, so a new push
+# should supersede the run it obsoletes rather than build alongside it.
+concurrency:
+  group: ios-contract-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ios-contract:
     name: iOS contract and performance

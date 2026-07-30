@@ -15,5 +15,17 @@
     }
   },
   "required_iterations": 100,
-  "max_failures": 0
+  "max_failures": 0,
+  "platforms": {
+    "ios": {
+      "metrics": {
+        "cold_route_ms": {
+          "absolute_slack": 1.0
+        },
+        "warm_route_ms_p50": {
+          "absolute_slack": 0.6
+        }
+      }
+    }
+  }
 }
