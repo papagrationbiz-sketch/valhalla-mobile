@@ -28,6 +28,7 @@ DerivedData/
 # valhalla-wrapper.xcframework  <- Allow this to be committed
 valhalla-wrapper.xcframework.zip
 libvalhalla-wrapper.so
+/build/android/
 
 # Openapi temp
 .openapi-temp
