@@ -1,1 +1,4 @@
-# The public API is referenced directly by consumers; no additional keep rules are required.
+# The native symbol is Java_com_valhalla_valhalla_ValhallaKotlin_route.
+-keep class com.valhalla.valhalla.ValhallaKotlin {
+    native <methods>;
+}

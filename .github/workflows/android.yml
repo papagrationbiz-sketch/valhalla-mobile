@@ -173,11 +173,11 @@ jobs:
           name: native-x86_64
           path: build/android/x86_64/wrapper/wrapper
 
-      - name: Assemble combined AAR
+      - name: Assemble combined release AAR
         run: |
           ./android/gradlew \
             -p android \
-            :valhalla:assembleDebug \
+            :valhalla:assembleRelease \
             -PvalhallaUsePrebuiltNative=true \
             --no-daemon \
             --warning-mode=fail
@@ -185,17 +185,20 @@ jobs:
       - name: Inspect AAR
         shell: bash
         run: |
-          aar="android/valhalla/build/outputs/aar/valhalla-debug.aar"
+          aar="android/valhalla/build/outputs/aar/valhalla-release.aar"
           entries="$(unzip -Z1 "$aar" | grep -E '^jni/.+\.so$' | sort)"
           test "$entries" = "$(printf '%s\n' \
             'jni/arm64-v8a/libvalhalla-wrapper.so' \
             'jni/x86_64/libvalhalla-wrapper.so')"
+          unzip -p "$aar" proguard.txt \
+            | grep -F -- '-keep class com.valhalla.valhalla.ValhallaKotlin'
+          unzip -p "$aar" proguard.txt | grep -F -- 'native <methods>;'
 
       - name: Upload AAR
         uses: actions/upload-artifact@v4
         with:
-          name: valhalla-debug-aar
-          path: android/valhalla/build/outputs/aar/valhalla-debug.aar
+          name: valhalla-release-aar
+          path: android/valhalla/build/outputs/aar/valhalla-release.aar
           if-no-files-found: error
 
   emulator:
