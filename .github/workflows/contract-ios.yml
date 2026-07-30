@@ -1,0 +1,117 @@
+name: iOS contract results
+
+# Builds the wrapper from the pinned submodule and runs the shared contract
+# fixtures in the iOS Simulator. This is the expensive half of the comparison,
+# so it only runs when something that can change routing output changes;
+# Android compares against the recorded reference on every pull request.
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/contract-ios.yml"
+      - "Package.swift"
+      - "apple/**"
+      - "src"
+      - "contract-tests/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios-contract:
+    name: iOS contract and performance
+    runs-on: macos-15
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "16.4.0"
+
+      - name: Set up vcpkg
+        shell: bash
+        run: |
+          git clone https://github.com/microsoft/vcpkg "${RUNNER_TEMP}/vcpkg"
+          git -C "${RUNNER_TEMP}/vcpkg" checkout 2025.10.17
+          "${RUNNER_TEMP}/vcpkg/bootstrap-vcpkg.sh"
+          echo "VCPKG_ROOT=${RUNNER_TEMP}/vcpkg" >> "$GITHUB_ENV"
+
+      # Only the simulator slice is built. The contract tests run in the
+      # simulator, and building the device slice as well would roughly double
+      # an already long job for no extra coverage.
+      - name: Build the simulator slice
+        run: ./build.sh --ios arm64-ios-simulator
+
+      - name: Assemble a simulator-only XCFramework
+        shell: bash
+        run: |
+          libtool -static -o build/apple/arm64-ios-simulator/libvalhalla_all.a \
+            build/apple/arm64-ios-simulator/install/lib/*.a
+          rm -rf build/apple/valhalla-wrapper.xcframework
+          xcodebuild -create-xcframework \
+            -library build/apple/arm64-ios-simulator/libvalhalla_all.a \
+            -headers build/apple/arm64-ios-simulator/install/include \
+            -output build/apple/valhalla-wrapper.xcframework
+
+      # Package.swift resolves the published release by default. The contract
+      # test has to exercise the engine this commit pins, not the last release,
+      # so point it at what was just built. This edit is never committed, and
+      # the iOS non-regression guard runs in a separate job against the diff.
+      - name: Use the locally built XCFramework
+        shell: bash
+        run: |
+          sed -i '' 's|^let useLocalBinary = false|let useLocalBinary = true|' Package.swift
+          git diff --stat -- Package.swift
+
+      - name: Run the contract and performance tests
+        shell: bash
+        run: |
+          xcodebuild test \
+            -scheme valhalla-mobile \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -only-testing:ValhallaTests/ContractTests \
+            -only-testing:ValhallaTests/PerformanceTests \
+            -derivedDataPath "${RUNNER_TEMP}/DerivedData"
+
+      - name: Record the engine commit
+        shell: bash
+        run: |
+          results="build/contract-results/ios"
+          test -f "$results/performance.json"
+          python3 - "$results/performance.json" "$(git rev-parse HEAD:src/valhalla)" <<'PY'
+          import json, sys
+          path, commit = sys.argv[1], sys.argv[2]
+          with open(path) as handle:
+              record = json.load(handle)
+          # Injected here because the test cannot know which engine commit the
+          # wrapper was built from.
+          record["valhalla_commit"] = commit
+          with open(path, "w") as handle:
+              json.dump(record, handle, sort_keys=True)
+          PY
+
+      # Skipped until an iOS baseline has been recorded, so the first run can
+      # produce one instead of failing on its absence.
+      - name: Check iOS performance against the recorded baseline
+        shell: bash
+        run: |
+          if [ -f contract-tests/baselines/ios.json ]; then
+            python3 contract-tests/tools/verify.py compare-performance \
+              contract-tests/fixtures/performance-thresholds.json \
+              contract-tests/baselines/ios.json \
+              build/contract-results/ios/performance.json
+          else
+            echo "No iOS baseline recorded yet; skipping the performance gate."
+          fi
+
+      - name: Upload iOS contract results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-results-ios
+          path: build/contract-results/ios
+          if-no-files-found: error
