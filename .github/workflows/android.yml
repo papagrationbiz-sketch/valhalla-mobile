@@ -158,6 +158,7 @@ jobs:
           set -o pipefail
           "${sdk_root}/cmdline-tools/latest/bin/sdkmanager" \
             "build-tools;35.0.0" \
+            "ndk;${ANDROID_NDK_VERSION}" \
             "platforms;android-36" >/dev/null
 
       - name: Download arm64-v8a library
@@ -185,7 +186,7 @@ jobs:
         shell: bash
         run: |
           aar="android/valhalla/build/outputs/aar/valhalla-debug.aar"
-          entries="$(unzip -Z1 "$aar" | grep '^jni/')"
+          entries="$(unzip -Z1 "$aar" | grep -E '^jni/.+\.so$' | sort)"
           test "$entries" = "$(printf '%s\n' \
             'jni/arm64-v8a/libvalhalla-wrapper.so' \
             'jni/x86_64/libvalhalla-wrapper.so')"
@@ -201,6 +202,7 @@ jobs:
     name: x86_64 Emulator route
     needs: native
     runs-on: ubuntu-24.04
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -241,12 +243,20 @@ jobs:
           name: native-x86_64
           path: build/android/x86_64/wrapper/wrapper
 
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
       - name: Load native library and route fixture
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
           arch: x86_64
           target: google_apis
+          emulator-boot-timeout: 600
           disable-animations: true
           script: >-
             ./android/gradlew -p android
