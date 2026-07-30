@@ -368,7 +368,16 @@ jobs:
           PY
           echo "CONTRACT_RESULTS_ANDROID=$collected" >> "$GITHUB_ENV"
 
+      - name: Check Android performance against the recorded baseline
+        shell: bash
+        run: |
+          python3 contract-tests/tools/verify.py compare-performance \
+            contract-tests/fixtures/performance-thresholds.json \
+            contract-tests/baselines/android.json \
+            "${CONTRACT_RESULTS_ANDROID}/performance.json"
+
       - name: Upload Android contract results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: contract-results-android

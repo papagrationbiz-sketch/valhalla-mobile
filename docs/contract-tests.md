@@ -43,6 +43,23 @@ python3 contract-tests/tools/verify.py compare-performance \
   path/to/baseline.json path/to/candidate.json
 ```
 
+## Recorded baselines
+
+`contract-tests/baselines/<platform>.json` holds the measurement a CI run actually
+produced, and every later run is compared against it. Baselines are per platform because
+the numbers are specific to the runner: the same commit measured `warm_route_ms_p50` at
+14.6 ms on the CI x86_64 emulator and 2.6 ms on a local arm64 emulator.
+
+The thresholds are calibrated against those recorded baselines rather than against
+estimates. On the current Android baseline they reject a doubling of any metric while
+absorbing roughly 15-39% of run-to-run movement. They were previously set for
+placeholder numbers about forty times slower, which left `cold_route_ms` with 253%
+headroom — a doubling passed the gate.
+
+Update a baseline only when a change is meant to move the numbers, and say why in the
+commit. Note that the current calibration rests on a single CI sample per platform, so
+the noise allowance is an estimate until several runs have been recorded.
+
 ## Integration dependency
 
 This change intentionally does not edit Apple code, shared C++, the Valhalla submodule,
