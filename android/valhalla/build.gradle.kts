@@ -14,6 +14,11 @@ val requestedAbis =
         .map { value -> value.split(",").map(String::trim).filter(String::isNotEmpty).toSet() }
         .orElse(supportedAbis)
         .get()
+val usePrebuiltNative =
+    providers.gradleProperty("valhallaUsePrebuiltNative")
+        .map(String::toBooleanStrict)
+        .orElse(false)
+        .get()
 
 if (requestedAbis.isEmpty() || !supportedAbis.containsAll(requestedAbis)) {
     throw GradleException(
@@ -81,6 +86,7 @@ val prepareNativeTasks =
                 workingDir = rootProject.layout.projectDirectory.dir("..").asFile
                 commandLine("bash", "scripts/build_android.sh", abi)
                 outputs.file(nativeLibrary)
+                onlyIf("valhallaUsePrebuiltNative is not enabled") { !usePrebuiltNative }
             }
 
         tasks.register<Copy>("prepareValhalla$taskSuffix") {
@@ -89,6 +95,14 @@ val prepareNativeTasks =
             dependsOn(buildNative)
             from(nativeLibrary)
             into(layout.buildDirectory.dir("generated/jniLibs/$abi"))
+            doFirst {
+                if (!nativeLibrary.asFile.isFile) {
+                    throw GradleException(
+                        "Missing native library for $abi: ${nativeLibrary.asFile}. " +
+                            "Build it first or supply it with valhallaUsePrebuiltNative=true."
+                    )
+                }
+            }
         }
     }
 

@@ -3,6 +3,9 @@
 set -euo pipefail
 
 readonly android_api=29
+readonly expected_cmake_version=3.31.5
+readonly expected_ndk_revision=29.0.14206865
+readonly expected_vcpkg_commit=74e6536215718009aae747d86d84b78376bf9e09
 readonly requested_abi="${1:-}"
 readonly repository_root="$(cd "$(dirname "$0")/.." && pwd)"
 
@@ -35,11 +38,18 @@ readonly build_dir="$repository_root/build/android/$requested_abi/wrapper"
 
 test -f "$vcpkg_toolchain_file"
 test -f "$android_toolchain_file"
+grep -Fq "Pkg.Revision = $expected_ndk_revision" "$ANDROID_NDK_HOME/source.properties"
+test "$(git -C "$VCPKG_ROOT" rev-parse HEAD)" = "$expected_vcpkg_commit"
+test "$(cmake --version | sed -n '1s/^cmake version \([0-9.]*\).*/\1/p')" = "$expected_cmake_version"
+command -v ninja >/dev/null
 
 cmake \
   -S "$repository_root/src" \
   -B "$build_dir" \
+  --fresh \
+  -Wno-dev \
   -G Ninja \
+  -DCMAKE_WARN_DEPRECATED=OFF \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_TOOLCHAIN_FILE="$vcpkg_toolchain_file" \
   -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="$android_toolchain_file" \
