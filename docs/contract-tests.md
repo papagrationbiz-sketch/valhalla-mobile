@@ -15,6 +15,14 @@ python3 contract-tests/tools/verify.py compare-contracts \
   contract-tests/fixtures path/to/ios-results path/to/android-results
 ```
 
+`contract-tests/reference/ios` holds the recorded iOS responses. The Android job compares
+against them on every pull request, so cross-platform divergence is caught without
+building the Apple wrapper each time. The `iOS contract results` workflow rebuilds the
+wrapper from the pinned submodule, reruns the fixtures in the simulator, and fails if the
+recorded reference no longer matches — refresh it from that run's artifact when the change
+was intended. It runs only on changes that can move routing output (`apple`, `src`,
+`Package.swift`, `contract-tests`) and on manual dispatch.
+
 Comparison is structural, not JSON-text equality. Object key order and formatting do
 not matter. Arrays remain ordered. Shape strings, edge order and IDs, maneuver order and
 types, status, and all unspecified attributes must match exactly. Route distance and
@@ -23,8 +31,11 @@ time, maneuver distance and time, and selected trace values use the tolerances i
 
 ## Performance record
 
-Both platforms must write the schema shown in `contract-tests/examples`. Measurements
-use the `route-auto` case and the release SDK:
+Both platforms must write the schema shown in `contract-tests/examples`. Those two files
+are a schema example and a smoke test for the gate, not real measurements — the recorded
+numbers live in `contract-tests/baselines`. They carry the same `platform` because a
+baseline and candidate from different platforms are refused. Measurements use the
+`route-auto` case and the release SDK:
 
 - `cold_route_ms`: first route after actor construction;
 - `warm_route_ms_p50`: median of the following 100 routes on the same actor;
@@ -42,6 +53,29 @@ python3 contract-tests/tools/verify.py compare-performance \
   contract-tests/fixtures/performance-thresholds.json \
   path/to/baseline.json path/to/candidate.json
 ```
+
+## Recorded baselines
+
+`contract-tests/baselines/<platform>.json` holds the measurement a CI run actually
+produced, and every later run is compared against it. A comparison across platforms is
+refused: the runner dominates the numbers. The same commit and the same tiles give
+`warm_route_ms_p50` of 14.6 ms on the CI x86_64 Android emulator and 2.0 ms in the iOS
+simulator on Apple silicon.
+
+That spread is also why `absolute_slack` is per platform. It is an absolute allowance,
+so a value generous enough for the Android emulator hides a doubling on iOS — with the
+Android slack of 2.0 ms an iOS regression from 2.0 ms to 4.0 ms still passes. Defaults in
+`metrics` are the Android values; `platforms.<platform>.metrics` overrides individual
+fields, and only the timing slacks need it. `max_regression` is relative and stays shared.
+
+The thresholds are calibrated against the recorded baselines rather than estimates. They
+reject a doubling of any metric on either platform while absorbing about 25% of
+run-to-run movement. They were previously set for placeholder numbers roughly forty times
+slower, which left Android `cold_route_ms` with 253% headroom — a doubling passed.
+
+Update a baseline only when a change is meant to move the numbers, and say why in the
+commit. The calibration rests on a single CI sample per platform, so the noise allowance
+is an estimate until several runs have been recorded.
 
 ## Integration dependency
 

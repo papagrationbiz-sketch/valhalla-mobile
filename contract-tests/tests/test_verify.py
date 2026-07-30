@@ -117,6 +117,72 @@ class ContractVerifierTests(unittest.TestCase):
             with self.assertRaises(verify.VerificationError):
                 verify.compare_performance(*paths)
 
+    def _run_performance(self, thresholds, baseline, candidate):
+        with tempfile.TemporaryDirectory() as directory:
+            directory_path = Path(directory)
+            paths = []
+            for name, value in (
+                ("thresholds.json", thresholds),
+                ("baseline.json", baseline),
+                ("candidate.json", candidate),
+            ):
+                path = directory_path / name
+                path.write_text(json.dumps(value), encoding="utf-8")
+                paths.append(path)
+            verify.compare_performance(*paths)
+
+    def test_platform_mismatch_is_rejected(self):
+        """Comparing across platforms is meaningless: the runners differ far more
+        than any regression the gate is meant to catch."""
+        thresholds = {
+            "schema_version": 1,
+            "metrics": {"warm_route_ms_p50": {"max_regression": 0.2, "absolute_slack": 2}},
+            "required_iterations": 100,
+            "max_failures": 0,
+        }
+        identity = {
+            "schema_version": 1,
+            "fixture_id": "andorra-v1",
+            "valhalla_commit": "deadbeef",
+            "tile_sha256": "abc123",
+        }
+        metrics = {"warm_route_ms_p50": 10, "iterations": 100, "failures": 0}
+        with self.assertRaises(verify.VerificationError):
+            self._run_performance(
+                thresholds,
+                {**identity, "platform": "ios", "metrics": metrics},
+                {**identity, "platform": "android", "metrics": metrics},
+            )
+
+    def test_platform_override_tightens_absolute_slack(self):
+        """A slack sized for the slower platform would hide a doubling on the
+        faster one, so a platform override has to win over the default."""
+        thresholds = {
+            "schema_version": 1,
+            "metrics": {"warm_route_ms_p50": {"max_regression": 0.2, "absolute_slack": 2.0}},
+            "required_iterations": 100,
+            "max_failures": 0,
+            "platforms": {"ios": {"metrics": {"warm_route_ms_p50": {"absolute_slack": 0.6}}}},
+        }
+        identity = {
+            "schema_version": 1,
+            "fixture_id": "andorra-v1",
+            "valhalla_commit": "deadbeef",
+            "tile_sha256": "abc123",
+        }
+
+        def record(platform, warm):
+            return {
+                **identity,
+                "platform": platform,
+                "metrics": {"warm_route_ms_p50": warm, "iterations": 100, "failures": 0},
+            }
+
+        # 2 -> 4 ms: the default slack allows 4.4 ms, the ios override only 3.0 ms.
+        self._run_performance(thresholds, record("android", 2.0), record("android", 4.0))
+        with self.assertRaises(verify.VerificationError):
+            self._run_performance(thresholds, record("ios", 2.0), record("ios", 4.0))
+
 
 if __name__ == "__main__":
     unittest.main()

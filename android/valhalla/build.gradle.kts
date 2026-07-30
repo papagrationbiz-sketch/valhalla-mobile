@@ -53,6 +53,7 @@ android {
 
     sourceSets {
         getByName("main").jniLibs.srcDir(layout.buildDirectory.dir("generated/jniLibs"))
+        getByName("androidTest").assets.srcDir("../../contract-tests/fixtures")
     }
 
     compileOptions {

@@ -40,3 +40,6 @@ libvalhalla-wrapper.so
 
 # VCPKG
 /vcpkg
+
+# Contract test results produced by the local test runs
+/build/contract-results/
