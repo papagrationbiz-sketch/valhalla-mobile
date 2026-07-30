@@ -1,22 +1,17 @@
 # Upgrading Valhalla
 
-When a new valhalla release comes out at <https://github.com/valhalla/valhalla/releases>.
+The release baseline uses the `papagrationbiz-sketch/valhalla` fork, not an unmodified upstream
+Valhalla tag. Changing the submodule is a separate routing-core change and requires explicit
+approval, build verification, and behavior regression tests.
 
 ```sh
-# Clean up valhalla submodule (important this is not concurrent.)
-git submodule deinit -f src/valhalla
-git rm --cached src/valhalla
-rm -rf src/valhalla
-rm -rf .git/modules/src/valhalla
-
-# Checkout the latest release branch
-git submodule add https://github.com/valhalla/valhalla.git src/valhalla
-cd src/valhalla && git checkout 3.6.2 # Replace with the latest version tag release
-
-# Install recursive submodules now that the exact version of valhalla is selected.
+# Initialize the commit already pinned by the parent repository.
 git submodule update --init --recursive
+
+# Record the exact release baseline.
+git ls-tree HEAD src/valhalla
 ```
 
-At this point valhalla's src folder has been updated and prepared. 
-Now it's time to test if the existing `src/CMakeLists.txt` still builds by running
-an iOS and Android build.
+The `0.6.0` baseline is `13eb61624f9b6464dbaad5081e9fd71207ec539c`. A proposed upgrade must
+document the old and new commits, the fork-specific commits retained, and the iOS and Android test
+results. See [../release-policy.md](../release-policy.md).

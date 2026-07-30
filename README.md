@@ -1,13 +1,30 @@
 # Valhalla Mobile
 
 [![Valhalla](https://img.shields.io/badge/Valhalla-3.6.2-blue)](https://github.com/valhalla/valhalla/releases/tag/3.6.2)
-[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FRallista%2Fvalhalla-mobile%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/Rallista/valhalla-mobile)
-[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FRallista%2Fvalhalla-mobile%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/Rallista/valhalla-mobile)
 
-This project builds [valhalla](https://github.com/valhalla/valhalla) as a static iOS library.
+This project builds [Valhalla](https://github.com/valhalla/valhalla) as a static iOS library. The
+Apple wrapper exposes routing and trace APIs for downloaded, pre-parsed Valhalla tilesets.
 
-It currently only exposes the route function for the primary purpose of generating turn by turn navigation routes
-using a downloaded pre-parsed valhalla tileset.
+## Repository Identity and Upstream
+
+The canonical repository is
+[`papagrationbiz-sketch/valhalla-mobile`](https://github.com/papagrationbiz-sketch/valhalla-mobile).
+It is a fork of
+[`Rallista/valhalla-mobile`](https://github.com/Rallista/valhalla-mobile).
+Repository owners are part of the identity: links, issues, releases, and source references for this
+fork must use the `papagrationbiz-sketch` owner.
+
+The main differences in this fork are:
+
+- the Valhalla engine is pinned to the
+  [`papagrationbiz-sketch/valhalla`](https://github.com/papagrationbiz-sketch/valhalla) fork;
+- the Apple wrapper exposes `route`, `trace_route`, and `trace_attributes`;
+- the pinned engine includes an opt-in `motor_scooter.avoid_multi_lane_right_turns` costing option;
+- Android SDK restoration is planned for the repository-level `0.6.0` release, but Android artifacts
+  are not available from the current `0.5.11` release.
+
+This fork retains the upstream MIT license and copyright notices. See [LICENSE.md](LICENSE.md).
+The Valhalla engine submodule carries its own upstream notices.
 
 We welcome contributions to expand the functionality of this library. See our [CONTRIBUTING.md](CONTRIBUTING.md)
 for more information.
@@ -23,7 +40,7 @@ In a swift package:
 ```swift
 let package = Package(
     dependencies: [
-        .package(url: "https://github.com/papagrationbiz-sketch/valhalla-ios-runtime.git", from: "0.1.0"),
+        .package(url: "https://github.com/papagrationbiz-sketch/valhalla-mobile.git", from: "0.1.0"),
     ],
     targets: [
         .target(
@@ -61,8 +78,13 @@ On iOS, you must pre-build the xcframework using the command:
 
 ## Valhalla Fork
 
-This project uses our fork of valhalla at <https://github.com/Rallista/valhalla> as a submodule. If a feature is missing, please
-open an issue or PR on that repository to upgrade it to valhalla's latest version.
+This project uses <https://github.com/papagrationbiz-sketch/valhalla> as a submodule. Releases pin an
+exact submodule commit. The `0.6.0` release baseline is
+`13eb61624f9b6464dbaad5081e9fd71207ec539c`; do not replace it with an upstream tag without
+validating the fork-specific behavior.
+
+Release, migration, and rollback requirements are documented in
+[docs/release-policy.md](docs/release-policy.md).
 
 ## References
 

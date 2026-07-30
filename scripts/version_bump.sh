@@ -16,10 +16,13 @@ else
     exit 1
 fi
 
-echo "Bumping version from $last_tag to $next_version"
+echo "Bumping version from $last_version to $next_version"
 
 # Write the version to the version.txt file
 echo "$next_version" > version.txt
 
-# Output the tag to stdout
-echo ::set-output name=version::$next_version
+# Output the tag for GitHub Actions and for local callers.
+if [ -n "${GITHUB_OUTPUT:-}" ]; then
+    echo "version=$next_version" >> "$GITHUB_OUTPUT"
+fi
+echo "$next_version"

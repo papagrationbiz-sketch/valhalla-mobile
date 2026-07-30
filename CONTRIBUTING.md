@@ -13,7 +13,7 @@ It is a good idea to discuss large proposed changes before proceeding to an issu
 The project team is active in the following forums:
 
 * For larger discussions where it would be desirable to have wider input / a less ephemeral record,
-  consider starting a thread on [GitHub Discussions](https://github.com/papagrationbiz-sketch/valhalla-ios-runtime/discussions).
+  consider starting a thread on [GitHub Discussions](https://github.com/papagrationbiz-sketch/valhalla-mobile/discussions).
   This makes it easier to find and reference the discussion in the future.
 
 ### Testing

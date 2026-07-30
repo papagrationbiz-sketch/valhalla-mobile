@@ -6,7 +6,8 @@ we use the following architecture:
 
 ## iOS
 
-TODO: We want to simplify our current architecture w/ https://github.com/Rallista/valhalla-mobile/issues/42
+TODO: We want to simplify our current architecture based on the upstream discussion:
+https://github.com/Rallista/valhalla-mobile/issues/42
 
 ## Android
 

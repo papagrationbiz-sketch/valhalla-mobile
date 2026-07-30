@@ -120,23 +120,24 @@ jobs:
         id: version
         run: ./scripts/version_bump.sh ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'patch' || inputs.bump_version_scheme }}
 
+      - name: Write the xcframework to Package.swift
+        run: ./scripts/write_xcframework_spm.sh ${{ steps.version.outputs.version }}
+
+      # Commit the manifest before creating the immutable release tag.
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        id: release-commit
+        with:
+          commit_message: "Publish Package.swift and bump version to ${{ steps.version.outputs.version }} [skip ci]"
+          file_pattern: "Package.swift version.txt"
+
       - uses: softprops/action-gh-release@v1
         id: release
         with:
           draft: true
           generate_release_notes: true
           tag_name: ${{ steps.version.outputs.version }}
+          target_commitish: ${{ steps.release-commit.outputs.commit_hash }}
           files: "valhalla-wrapper.xcframework.zip"
-
-      - name: Write the xcframework to Package.swift
-        run: ./scripts/write_xcframework_spm.sh ${{ steps.version.outputs.version }}
-
-      # https://github.com/marketplace/actions/git-auto-commit#push-to-protected-branches
-      - uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Publish Package.swift and bump version to ${{ steps.version.outputs.version }} [skip ci]"
-          tagging_message: "${{ steps.version.outputs.version }}"
-          push_options: --force
 
       - name: Output version
         run: |
