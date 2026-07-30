@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "metrics": {
+    "cold_route_ms": {
+      "max_regression": 0.20,
+      "absolute_slack": 50.0
+    },
+    "warm_route_ms_p50": {
+      "max_regression": 0.15,
+      "absolute_slack": 5.0
+    },
+    "peak_rss_mb": {
+      "max_regression": 0.10,
+      "absolute_slack": 16.0
+    }
+  },
+  "required_iterations": 100,
+  "max_failures": 0
+}

@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "fixture_id": "andorra-v1",
+  "tile_sha256": "02e68c8cdb1e8ac9379855ac7bee2da21ee9240b1c314fbf5e2bf98c77f45cfd",
+  "tile_archives": {
+    "ios": "../../apple/Tests/ValhallaTests/TestData/valhalla_tiles.tar",
+    "android": "../../android/valhalla/src/androidTest/assets/valhalla_tiles.tar"
+  },
+  "cases": [
+    {
+      "id": "route-auto",
+      "endpoint": "route",
+      "request": "requests/route-auto.json",
+      "comparison_profile": "route"
+    },
+    {
+      "id": "route-motor-scooter",
+      "endpoint": "route",
+      "request": "requests/route-motor-scooter.json",
+      "comparison_profile": "route"
+    },
+    {
+      "id": "route-waypoints",
+      "endpoint": "route",
+      "request": "requests/route-waypoints.json",
+      "comparison_profile": "route"
+    },
+    {
+      "id": "route-avoid-tolls",
+      "endpoint": "route",
+      "request": "requests/route-avoid-tolls.json",
+      "comparison_profile": "route"
+    },
+    {
+      "id": "trace-attributes",
+      "endpoint": "trace_attributes",
+      "request": "requests/trace-attributes.json",
+      "comparison_profile": "trace"
+    },
+    {
+      "id": "trace-route",
+      "endpoint": "trace_route",
+      "request": "requests/trace-route.json",
+      "comparison_profile": "route"
+    },
+    {
+      "id": "invalid-request",
+      "endpoint": "route",
+      "request": "requests/invalid-request.json",
+      "comparison_profile": "error"
+    },
+    {
+      "id": "actor-lifecycle",
+      "endpoint": "route",
+      "request": "requests/route-auto.json",
+      "comparison_profile": "route",
+      "execution": {
+        "reuse_count": 100,
+        "reinitialize_after": true
+      }
+    }
+  ]
+}

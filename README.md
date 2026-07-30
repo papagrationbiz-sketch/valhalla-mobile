@@ -56,7 +56,8 @@ let package = Package(
 
 The restored Android SDK exposes persistent raw JSON route, trace attributes, and trace route APIs
 for API 29 and later on `arm64-v8a` and `x86_64`. Build and validation instructions are in
-[docs/android-restoration.md](docs/android-restoration.md).
+[docs/android-restoration.md](docs/android-restoration.md). GitHub Actions verification and
+GitHub Release distribution are documented in [docs/android-release.md](docs/android-release.md).
 
 ## Manually Building Valhalla C++
 

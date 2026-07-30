@@ -1,0 +1,86 @@
+name: Android Release Assets
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Existing repository release tag"
+        required: true
+        default: "0.6.0"
+        type: string
+      attach_to_draft_release:
+        description: "Attach verified assets to the existing draft release"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    uses: ./.github/workflows/android.yml
+
+  package:
+    name: Package Android release assets
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag }}
+
+      - name: Verify immutable release input
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        shell: bash
+        run: |
+          test "$GITHUB_REF" = "refs/tags/${RELEASE_TAG}"
+          test "$(tr -d '\n' < version.txt)" = "$RELEASE_TAG"
+
+      - name: Download AAR
+        uses: actions/download-artifact@v4
+        with:
+          name: valhalla-release-aar
+          path: staging/aar
+
+      - name: Download SBOM and licenses
+        uses: actions/download-artifact@v4
+        with:
+          name: android-release-metadata
+          path: staging/metadata
+
+      - name: Assemble release assets
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        shell: bash
+        run: |
+          mkdir -p release
+          aar="release/valhalla-mobile-${RELEASE_TAG}.aar"
+          cp "staging/aar/android/valhalla/build/outputs/aar/valhalla-release.aar" "$aar"
+          cp staging/aar/build/android/aar-metadata/aar-metrics.json release/
+          cp staging/metadata/android-dependencies.spdx.json release/
+          tar -C staging/metadata -czf release/android-third-party-licenses.tar.gz \
+            licenses vcpkg-status.txt
+          sha256sum "$aar" > "${aar}.sha256"
+          sha256sum -c "${aar}.sha256"
+
+      - name: Upload verified release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: valhalla-mobile-${{ inputs.release_tag }}-android-release
+          path: release
+          if-no-files-found: error
+
+      - name: Attach to existing draft release
+        if: inputs.attach_to_draft_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        shell: bash
+        run: |
+          test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = "true"
+          gh release upload "$RELEASE_TAG" release/*
