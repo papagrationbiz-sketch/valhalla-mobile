@@ -1,6 +1,7 @@
 package io.github.papagrationbizsketch.valhalla.consumersmoke
 
 import android.content.Context
+import android.content.res.AssetManager
 import android.net.Uri
 import android.os.Bundle
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -15,10 +16,12 @@ import org.junit.runner.RunWith
 class MinifiedConsumerTest {
   @Test
   fun minifiedConsumerLoadsRegisteredNativeMethodsAndRoutes() {
-    val context = InstrumentationRegistry.getInstrumentation().targetContext
-    val tileArchive = copyAsset(context, "valhalla_tiles.tar")
+    val instrumentation = InstrumentationRegistry.getInstrumentation()
+    val context = instrumentation.targetContext
+    val assets = instrumentation.context.assets
+    val tileArchive = copyAsset(context, assets, "valhalla_tiles.tar")
     val config =
-        context.assets.open("config.json").bufferedReader().use { reader ->
+        assets.open("config.json").bufferedReader().use { reader ->
           JSONObject(reader.readText())
         }
     config.getJSONObject("mjolnir").put("tile_extract", tileArchive.absolutePath)
@@ -37,9 +40,9 @@ class MinifiedConsumerTest {
     assertEquals(0, response.getJSONObject("trip").getInt("status"))
   }
 
-  private fun copyAsset(context: Context, name: String): File =
+  private fun copyAsset(context: Context, assets: AssetManager, name: String): File =
       File(context.filesDir, name).also { output ->
-        context.assets.open(name).use { input ->
+        assets.open(name).use { input ->
           output.outputStream().use { stream -> input.copyTo(stream) }
         }
       }
