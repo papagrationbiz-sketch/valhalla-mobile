@@ -343,6 +343,38 @@ jobs:
             --no-daemon
             --warning-mode=fail
 
+      # The instrumentation tests write their results to the directory AGP passes
+      # as additionalTestOutputDir, which AGP copies here before uninstalling the
+      # test package. Flatten it so the comparison job sees a stable layout
+      # instead of one nested under the device name.
+      - name: Collect contract and performance results
+        shell: bash
+        run: |
+          collected="${RUNNER_TEMP}/contract-results-android"
+          mkdir -p "$collected"
+          find android/valhalla/build/outputs/connected_android_test_additional_output \
+            -type f -name '*.json' -exec cp {} "$collected/" \;
+          test -f "$collected/performance.json"
+          python3 - "$collected/performance.json" "$(git rev-parse HEAD:src/valhalla)" <<'PY'
+          import json, sys
+          path, commit = sys.argv[1], sys.argv[2]
+          with open(path) as handle:
+              record = json.load(handle)
+          # Injected here because the instrumentation test cannot know which
+          # engine commit the native library was built from.
+          record["valhalla_commit"] = commit
+          with open(path, "w") as handle:
+              json.dump(record, handle, sort_keys=True)
+          PY
+          echo "CONTRACT_RESULTS_ANDROID=$collected" >> "$GITHUB_ENV"
+
+      - name: Upload Android contract results
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-results-android
+          path: ${{ env.CONTRACT_RESULTS_ANDROID }}
+          if-no-files-found: error
+
       - name: Upload Android test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -364,6 +396,10 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
+      # apple/Tests is deliberately not guarded: it carries the cross-platform
+      # contract tests and ships in nothing. Everything the XCFramework is built
+      # from stays frozen, and Package.swift is guarded separately so no new
+      # shipped target can be introduced through the test directory.
       - name: Reject Apple, release, shared C++, or submodule changes
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -371,7 +407,7 @@ jobs:
         run: |
           git diff --exit-code "$BASE_SHA"...HEAD -- \
             Package.swift \
-            apple \
+            apple/Sources \
             src \
             .github/workflows/release.yml \
             scripts/build_apple.sh \
