@@ -392,6 +392,16 @@ jobs:
             echo "No iOS reference recorded yet; skipping the cross-platform comparison."
           fi
 
+      # Relations between cases of one run, which the cross-platform comparison
+      # cannot express: it checks one case against the other platform, not one
+      # case against another.
+      - name: Check single-run invariants
+        shell: bash
+        run: |
+          python3 contract-tests/tools/verify.py check-invariants \
+            contract-tests/fixtures \
+            "${CONTRACT_RESULTS_ANDROID}"
+
       - name: Upload Android contract results
         if: always()
         uses: actions/upload-artifact@v4

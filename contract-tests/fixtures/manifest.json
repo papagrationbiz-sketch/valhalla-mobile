@@ -20,6 +20,18 @@
       "comparison_profile": "route"
     },
     {
+      "id": "route-motor-scooter-disabled",
+      "endpoint": "route",
+      "request": "requests/route-motor-scooter-disabled.json",
+      "comparison_profile": "route"
+    },
+    {
+      "id": "route-motor-scooter-enabled",
+      "endpoint": "route",
+      "request": "requests/route-motor-scooter-enabled.json",
+      "comparison_profile": "route"
+    },
+    {
       "id": "route-waypoints",
       "endpoint": "route",
       "request": "requests/route-waypoints.json",
@@ -58,6 +70,27 @@
         "reuse_count": 100,
         "reinitialize_after": true
       }
+    }
+  ],
+  "invariants": [
+    {
+      "id": "multi-lane-right-turn-default",
+      "type": "identical_response",
+      "cases": [
+        "route-motor-scooter",
+        "route-motor-scooter-disabled"
+      ],
+      "description": "avoid_multi_lane_right_turns defaults to false, so omitting it must match disabling it."
+    },
+    {
+      "id": "multi-lane-right-turn-eta",
+      "type": "equal_eta",
+      "cases": [
+        "route-motor-scooter",
+        "route-motor-scooter-disabled",
+        "route-motor-scooter-enabled"
+      ],
+      "description": "The opt-in penalty is added to search cost only and must not alter reported ETA seconds."
     }
   ]
 }
