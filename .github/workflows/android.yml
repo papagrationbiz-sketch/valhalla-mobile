@@ -263,15 +263,15 @@ jobs:
           target: google_apis
           emulator-boot-timeout: 600
           disable-animations: true
-          script: |
-            ./android/gradlew \
-              -p android \
-              :valhalla:connectedDebugAndroidTest \
-              :consumer-smoke:connectedReleaseAndroidTest \
-              -PvalhallaAbis=x86_64 \
-              -PvalhallaUsePrebuiltNative=true \
-              --no-daemon \
-              --warning-mode=fail
+          script: >-
+            cd android &&
+            ./gradlew
+            :valhalla:connectedDebugAndroidTest
+            :consumer-smoke:connectedReleaseAndroidTest
+            -PvalhallaAbis=x86_64
+            -PvalhallaUsePrebuiltNative=true
+            --no-daemon
+            --warning-mode=fail
 
       - name: Upload Android test reports
         if: always()
