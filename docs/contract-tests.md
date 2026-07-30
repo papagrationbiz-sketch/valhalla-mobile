@@ -15,6 +15,14 @@ python3 contract-tests/tools/verify.py compare-contracts \
   contract-tests/fixtures path/to/ios-results path/to/android-results
 ```
 
+`contract-tests/reference/ios` holds the recorded iOS responses. The Android job compares
+against them on every pull request, so cross-platform divergence is caught without
+building the Apple wrapper each time. The `iOS contract results` workflow rebuilds the
+wrapper from the pinned submodule, reruns the fixtures in the simulator, and fails if the
+recorded reference no longer matches — refresh it from that run's artifact when the change
+was intended. It runs only on changes that can move routing output (`apple`, `src`,
+`Package.swift`, `contract-tests`) and on manual dispatch.
+
 Comparison is structural, not JSON-text equality. Object key order and formatting do
 not matter. Arrays remain ordered. Shape strings, edge order and IDs, maneuver order and
 types, status, and all unspecified attributes must match exactly. Route distance and

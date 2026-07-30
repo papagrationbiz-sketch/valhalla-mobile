@@ -376,6 +376,22 @@ jobs:
             contract-tests/baselines/android.json \
             "${CONTRACT_RESULTS_ANDROID}/performance.json"
 
+      # Compares against the recorded iOS responses rather than running iOS here,
+      # so every pull request gets cross-platform checking without paying for an
+      # Apple build. The reference is refreshed by the iOS contract workflow.
+      # Skipped until that workflow has recorded one.
+      - name: Compare Android responses against the iOS reference
+        shell: bash
+        run: |
+          if [ -d contract-tests/reference/ios ]; then
+            python3 contract-tests/tools/verify.py compare-contracts \
+              contract-tests/fixtures \
+              contract-tests/reference/ios \
+              "${CONTRACT_RESULTS_ANDROID}"
+          else
+            echo "No iOS reference recorded yet; skipping the cross-platform comparison."
+          fi
+
       - name: Upload Android contract results
         if: always()
         uses: actions/upload-artifact@v4

@@ -94,6 +94,22 @@ jobs:
               json.dump(record, handle, sort_keys=True)
           PY
 
+      # Android compares its responses against the recorded reference on every
+      # pull request, so the reference has to stay current. Failing here is the
+      # signal that an intended iOS change needs the reference refreshed from
+      # this run's artifact.
+      - name: Check the recorded iOS reference is still current
+        shell: bash
+        run: |
+          if [ -d contract-tests/reference/ios ]; then
+            python3 contract-tests/tools/verify.py compare-contracts \
+              contract-tests/fixtures \
+              contract-tests/reference/ios \
+              build/contract-results/ios
+          else
+            echo "No iOS reference recorded yet; commit this run's artifact as one."
+          fi
+
       # Skipped until an iOS baseline has been recorded, so the first run can
       # produce one instead of failing on its absence.
       - name: Check iOS performance against the recorded baseline
