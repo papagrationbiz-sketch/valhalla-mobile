@@ -31,8 +31,11 @@ time, maneuver distance and time, and selected trace values use the tolerances i
 
 ## Performance record
 
-Both platforms must write the schema shown in `contract-tests/examples`. Measurements
-use the `route-auto` case and the release SDK:
+Both platforms must write the schema shown in `contract-tests/examples`. Those two files
+are a schema example and a smoke test for the gate, not real measurements — the recorded
+numbers live in `contract-tests/baselines`. They carry the same `platform` because a
+baseline and candidate from different platforms are refused. Measurements use the
+`route-auto` case and the release SDK:
 
 - `cold_route_ms`: first route after actor construction;
 - `warm_route_ms_p50`: median of the following 100 routes on the same actor;
