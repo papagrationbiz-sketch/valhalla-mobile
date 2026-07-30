@@ -1,0 +1,19 @@
+{
+  "shape": [
+    {"lat": 42.5063, "lon": 1.5218},
+    {"lat": 42.5072, "lon": 1.5280},
+    {"lat": 42.5086, "lon": 1.5394}
+  ],
+  "costing": "auto",
+  "shape_match": "map_snap",
+  "filters": {
+    "action": "include",
+    "attributes": [
+      "edge.id",
+      "edge.length",
+      "edge.speed",
+      "edge.names",
+      "matched.point"
+    ]
+  }
+}

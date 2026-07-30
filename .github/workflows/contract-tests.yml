@@ -1,0 +1,32 @@
+name: Contract test specification
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/contract-tests.yml"
+      - "contract-tests/**"
+      - "docs/contract-tests.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate shared fixtures
+        run: python3 contract-tests/tools/verify.py validate-fixtures contract-tests/fixtures
+
+      - name: Test contract verifier
+        run: python3 -m unittest discover -s contract-tests/tests -v
+
+      - name: Exercise performance regression gate
+        run: >-
+          python3 contract-tests/tools/verify.py compare-performance
+          contract-tests/fixtures/performance-thresholds.json
+          contract-tests/examples/performance-baseline.json
+          contract-tests/examples/performance-candidate.json
