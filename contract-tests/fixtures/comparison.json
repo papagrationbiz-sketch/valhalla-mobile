@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "profiles": {
+    "route": {
+      "ignore_paths": [
+        "/trip/legs/*/maneuvers/*/verbal_*"
+      ],
+      "numeric_tolerances": [
+        {
+          "path": "/trip/summary/length",
+          "absolute": 0.02,
+          "relative": 0.01
+        },
+        {
+          "path": "/trip/summary/time",
+          "absolute": 2.0,
+          "relative": 0.03
+        },
+        {
+          "path": "/trip/legs/*/summary/length",
+          "absolute": 0.02,
+          "relative": 0.01
+        },
+        {
+          "path": "/trip/legs/*/summary/time",
+          "absolute": 2.0,
+          "relative": 0.03
+        },
+        {
+          "path": "/trip/legs/*/maneuvers/*/length",
+          "absolute": 0.01,
+          "relative": 0.02
+        },
+        {
+          "path": "/trip/legs/*/maneuvers/*/time",
+          "absolute": 1.0,
+          "relative": 0.05
+        }
+      ]
+    },
+    "trace": {
+      "ignore_paths": [],
+      "numeric_tolerances": [
+        {
+          "path": "/matched_points/*/distance_along_edge",
+          "absolute": 0.000001,
+          "relative": 0.0001
+        },
+        {
+          "path": "/matched_points/*/distance_from_trace_point",
+          "absolute": 1.0,
+          "relative": 0.05
+        },
+        {
+          "path": "/edges/*/length",
+          "absolute": 0.002,
+          "relative": 0.02
+        },
+        {
+          "path": "/edges/*/speed",
+          "absolute": 1.0,
+          "relative": 0.05
+        }
+      ]
+    },
+    "error": {
+      "ignore_paths": [],
+      "numeric_tolerances": []
+    }
+  }
+}
