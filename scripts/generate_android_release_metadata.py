@@ -30,6 +30,17 @@ def spdx_id(name: str) -> str:
     return "SPDXRef-Package-" + re.sub(r"[^A-Za-z0-9.-]", "-", name)
 
 
+def manifest_license(path: pathlib.Path) -> str | None:
+    """Return the license identifier vcpkg recorded in a port's SPDX manifest."""
+    document = json.loads(path.read_text())
+    for package in document.get("packages", []):
+        for field in ("licenseConcluded", "licenseDeclared"):
+            value = package.get(field)
+            if value and value != "NOASSERTION":
+                return value
+    return None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repository-root", type=pathlib.Path, required=True)
@@ -54,10 +65,26 @@ def main() -> None:
     sbom_packages = []
     relationships = []
     for name, package in sorted(unique_packages.items()):
-        copyright_file = installed_root / "share" / name / "copyright"
-        if not copyright_file.is_file():
+        port_share_dir = installed_root / "share" / name
+        copyright_file = port_share_dir / "copyright"
+        spdx_manifest = port_share_dir / "vcpkg.spdx.json"
+        license_concluded = "NOASSERTION"
+        if copyright_file.is_file():
+            shutil.copyfile(copyright_file, licenses_dir / f"{name}.txt")
+        elif spdx_manifest.is_file():
+            # Internal vcpkg helper ports ship no copyright file; fall back to the
+            # license identifier recorded in their SPDX manifest.
+            license_concluded = manifest_license(spdx_manifest)
+            if license_concluded is None:
+                raise SystemExit(
+                    f"No copyright file and no SPDX license identifier for: {port_share_dir}"
+                )
+            (licenses_dir / f"{name}.txt").write_text(
+                f"{name} ships no vcpkg copyright file.\n"
+                f"License identifier declared in vcpkg.spdx.json: {license_concluded}\n"
+            )
+        else:
             raise SystemExit(f"Missing vcpkg copyright file: {copyright_file}")
-        shutil.copyfile(copyright_file, licenses_dir / f"{name}.txt")
 
         identifier = spdx_id(name)
         sbom_packages.append(
@@ -67,7 +94,7 @@ def main() -> None:
                 "versionInfo": package.get("Version", "NOASSERTION"),
                 "downloadLocation": "NOASSERTION",
                 "filesAnalyzed": False,
-                "licenseConcluded": "NOASSERTION",
+                "licenseConcluded": license_concluded,
                 "licenseDeclared": "NOASSERTION",
                 "copyrightText": "NOASSERTION",
                 "externalRefs": [
