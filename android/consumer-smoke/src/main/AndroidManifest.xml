@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <provider
+            android:name=".RouteProvider"
+            android:authorities="io.github.papagrationbizsketch.valhalla.consumersmoke.route"
+            android:exported="true" />
+    </application>
+</manifest>

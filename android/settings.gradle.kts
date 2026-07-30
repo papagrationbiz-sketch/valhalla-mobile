@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "valhalla-mobile"
 include(":valhalla")
+include(":consumer-smoke")

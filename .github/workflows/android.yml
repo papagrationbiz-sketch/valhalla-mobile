@@ -110,6 +110,7 @@ jobs:
           library="build/android/${ABI}/wrapper/wrapper/libvalhalla-wrapper.so"
           readelf="${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf"
           "$readelf" -h "$library" | grep -F "$EXPECTED_MACHINE"
+          "$readelf" --dyn-syms "$library" | grep -F "JNI_OnLoad"
           if "$readelf" -d "$library" | grep -F "libc++_shared.so"; then
             echo "ELF unexpectedly depends on libc++_shared.so" >&2
             exit 1
@@ -177,6 +178,7 @@ jobs:
         run: |
           ./android/gradlew \
             -p android \
+            :valhalla:testDebugUnitTest \
             :valhalla:assembleRelease \
             -PvalhallaUsePrebuiltNative=true \
             --no-daemon \
@@ -191,7 +193,7 @@ jobs:
             'jni/arm64-v8a/libvalhalla-wrapper.so' \
             'jni/x86_64/libvalhalla-wrapper.so')"
           unzip -p "$aar" proguard.txt \
-            | grep -F -- '-keep class com.valhalla.valhalla.ValhallaKotlin'
+            | grep -F -- '-keep class com.valhalla.valhalla.ValhallaNative'
           unzip -p "$aar" proguard.txt | grep -F -- 'native <methods>;'
 
       - name: Upload AAR
@@ -202,10 +204,10 @@ jobs:
           if-no-files-found: error
 
   emulator:
-    name: x86_64 Emulator route
+    name: x86_64 Emulator actor and minified consumer
     needs: native
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -253,7 +255,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Load native library and route fixture
+      - name: Validate persistent actor and minified consumer
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -261,13 +263,25 @@ jobs:
           target: google_apis
           emulator-boot-timeout: 600
           disable-animations: true
-          script: >-
-            ./android/gradlew -p android
-            :valhalla:connectedDebugAndroidTest
-            -PvalhallaAbis=x86_64
-            -PvalhallaUsePrebuiltNative=true
-            --no-daemon
-            --warning-mode=fail
+          script: |
+            ./android/gradlew \
+              -p android \
+              :valhalla:connectedDebugAndroidTest \
+              :consumer-smoke:connectedReleaseAndroidTest \
+              -PvalhallaAbis=x86_64 \
+              -PvalhallaUsePrebuiltNative=true \
+              --no-daemon \
+              --warning-mode=fail
+
+      - name: Upload Android test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-emulator-test-reports
+          path: |
+            android/valhalla/build/reports/androidTests/
+            android/consumer-smoke/build/reports/androidTests/
+          if-no-files-found: ignore
 
   ios-non-regression:
     name: iOS non-regression guard
@@ -280,7 +294,7 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - name: Reject Apple, release, shared JNI, or submodule changes
+      - name: Reject Apple, release, shared C++, or submodule changes
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         shell: bash
@@ -288,12 +302,11 @@ jobs:
           git diff --exit-code "$BASE_SHA"...HEAD -- \
             Package.swift \
             apple \
-            src/wrapper \
+            src \
             .github/workflows/release.yml \
             scripts/build_apple.sh \
             scripts/create_xcframework.sh \
             scripts/write_xcframework_spm.sh \
-            version.txt \
-            src/valhalla
+            version.txt
           test "$(git rev-parse HEAD:src/valhalla)" = "13eb61624f9b6464dbaad5081e9fd71207ec539c"
           swift package dump-package >/dev/null

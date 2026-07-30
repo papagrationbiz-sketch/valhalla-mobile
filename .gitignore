@@ -4,6 +4,7 @@
 /android/local.properties
 /android/.idea
 /android/build/
+/android/*/build/
 /android/.kotlin
 .DS_Store
 # /build  <-- Allow our specialized build artifact
