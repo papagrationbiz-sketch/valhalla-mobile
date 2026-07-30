@@ -85,6 +85,17 @@ val prepareNativeTasks =
                 description = "Build the Valhalla native library for $abi"
                 workingDir = rootProject.layout.projectDirectory.dir("..").asFile
                 commandLine("bash", "scripts/build_android.sh", abi)
+                inputs.files(
+                    rootProject.file("../scripts/build_android.sh"),
+                    rootProject.file("../src/CMakeLists.txt"),
+                    rootProject.file("../src/vcpkg.json"),
+                    rootProject.fileTree("../src/wrapper"),
+                    rootProject.fileTree("../android/native"),
+                    rootProject.fileTree("../triplets"),
+                )
+                inputs.property("androidAbi", abi)
+                inputs.property("androidPlatform", 29)
+                inputs.property("androidNdkVersion", android.ndkVersion)
                 outputs.file(nativeLibrary)
                 onlyIf("valhallaUsePrebuiltNative is not enabled") { !usePrebuiltNative }
             }

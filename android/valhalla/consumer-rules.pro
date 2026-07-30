@@ -1,4 +1,4 @@
-# The native symbol is Java_com_valhalla_valhalla_ValhallaKotlin_route.
--keep class com.valhalla.valhalla.ValhallaKotlin {
+# JNI_OnLoad registers these methods by class and member name.
+-keep class com.valhalla.valhalla.ValhallaNative {
     native <methods>;
 }

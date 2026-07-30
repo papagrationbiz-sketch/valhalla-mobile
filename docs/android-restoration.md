@@ -1,7 +1,8 @@
 # Android SDK Restoration
 
-Issue #12 restores the minimum Android library needed to call the existing Valhalla JNI route
-bridge. It does not restore the removed typed API or publication configuration.
+Issue #12 restored the minimum Android library. Issue #13 adds a persistent actor, lifecycle
+management, and all three raw JSON operations. It does not restore the removed typed API or
+publication configuration.
 
 ## Provenance and scope
 
@@ -25,7 +26,7 @@ The following reference-tree features are intentionally omitted:
 - Prefab native headers
 - exact full-response fixture comparisons
 
-Typed Android API parity is deferred to Issue #13.
+Typed request and response models remain out of scope.
 
 ## Toolchain
 
@@ -72,26 +73,39 @@ expected `.so` is missing.
 ```kotlin
 import io.github.papagrationbizsketch.valhalla.Valhalla
 
-val actor = Valhalla("/absolute/path/to/valhalla.json")
-val responseJson = actor.route(requestJson)
+Valhalla("/absolute/path/to/valhalla.json").use { actor ->
+    val routeJson = actor.route(routeRequestJson)
+    val attributesJson = actor.traceAttributes(traceRequestJson)
+    val traceRouteJson = actor.traceRoute(traceRequestJson)
+}
 ```
 
 Requests and responses use Valhalla's raw JSON wire format. Native failures are returned as JSON
-objects with `code` and `message`.
+objects with `code` and `message`. A configuration error is retained by the actor and returned by
+each operation. Calling an operation after `close()` throws
+`IllegalStateException("Valhalla is closed")`; repeated `close()` calls are safe.
 
-The internal `com.valhalla.valhalla.ValhallaKotlin` package is retained only to match the existing
-JNI symbol. It is not public API.
+Each instance owns a persistent native actor and a dedicated single-thread executor. Construction,
+all operations, and destruction are serialized. Create a new `Valhalla` instance to use a different
+configuration. The internal `com.valhalla.valhalla.ValhallaNative` bridge is not public API.
 
 ## Validation
 
-Issue #12 requires:
+Android validation requires:
 
 1. native build for `arm64-v8a` and `x86_64`;
 2. AAR and ELF inspection proving that only those ABIs are packaged;
 3. x86_64 Emulator native loading;
-4. a successful route against the fixed tile fixture;
-5. no changes to the Valhalla submodule, shared C++ wrapper, Swift package, Apple code, or release
+4. one actor successfully running route, trace_attributes, and trace_route against the fixed
+   fixture;
+5. 100 routes after warmup without native heap growth over
+   `max(16 MiB, 10% of baseline)`;
+6. close, concurrent caller, invalid configuration, and lifecycle unit tests;
+7. a minified R8 consumer APK loading the JNI bridge and routing on the Emulator;
+8. GWP-ASan enabled only in the consumer smoke test app;
+9. no changes to the Valhalla submodule, shared C++ wrapper, Swift package, Apple code, or release
    workflow.
 
 An arm64 physical-device route remains required before the `0.6.0` release, but is deferred from
-the Issue #12 merge gate to the Android SDK integration/performance work.
+the merge gate to the Android SDK integration/performance work. Native Allocations profiling is a
+manual diagnostic aid rather than a merge gate.

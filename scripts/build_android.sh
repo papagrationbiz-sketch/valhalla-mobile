@@ -35,9 +35,13 @@ esac
 readonly vcpkg_toolchain_file="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 readonly android_toolchain_file="$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake"
 readonly build_dir="$repository_root/build/android/$requested_abi/wrapper"
+readonly android_cmake_hook="$repository_root/android/native/ValhallaAndroid.cmake"
+readonly android_jni_source="$repository_root/android/native/valhalla_jni.cpp"
 
 test -f "$vcpkg_toolchain_file"
 test -f "$android_toolchain_file"
+test -f "$android_cmake_hook"
+test -f "$android_jni_source"
 grep -Fq "Pkg.Revision = $expected_ndk_revision" "$ANDROID_NDK_HOME/source.properties"
 test "$(git -C "$VCPKG_ROOT" rev-parse HEAD)" = "$expected_vcpkg_commit"
 test "$(cmake --version | sed -n '1s/^cmake version \([0-9.]*\).*/\1/p')" = "$expected_cmake_version"
@@ -51,6 +55,8 @@ cmake \
   -G Ninja \
   -DCMAKE_WARN_DEPRECATED=OFF \
   -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DCMAKE_PROJECT_INCLUDE="$android_cmake_hook" \
   -DCMAKE_TOOLCHAIN_FILE="$vcpkg_toolchain_file" \
   -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="$android_toolchain_file" \
   -DVCPKG_OVERLAY_TRIPLETS="$repository_root/triplets" \
@@ -60,3 +66,16 @@ cmake \
   -DANDROID_STL=c++_static
 
 cmake --build "$build_dir" --config Release --parallel
+
+readonly compile_commands="$build_dir/compile_commands.json"
+test -f "$compile_commands"
+readonly compile_commands_count="$(
+  grep -Ec '"file": ".*android/native/valhalla_jni.cpp"' "$compile_commands"
+)"
+readonly ninja_commands_count="$(
+  ninja -C "$build_dir" -t commands valhalla-wrapper \
+    | grep -F 'android/native/valhalla_jni.cpp' \
+    | grep -c -- ' -c '
+)"
+test "$compile_commands_count" -eq 1
+test "$ninja_commands_count" -eq 1
