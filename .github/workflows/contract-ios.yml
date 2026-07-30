@@ -100,6 +100,16 @@ jobs:
               json.dump(record, handle, sort_keys=True)
           PY
 
+      # Relations between cases of one run, which the cross-platform comparison
+      # cannot express: it checks one case against the other platform, not one
+      # case against another.
+      - name: Check single-run invariants
+        shell: bash
+        run: |
+          python3 contract-tests/tools/verify.py check-invariants \
+            contract-tests/fixtures \
+            build/contract-results/ios
+
       # Android compares its responses against the recorded reference on every
       # pull request, so the reference has to stay current. Failing here is the
       # signal that an intended iOS change needs the reference refreshed from

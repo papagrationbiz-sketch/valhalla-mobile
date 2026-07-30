@@ -171,6 +171,44 @@ def compare_contracts(
         raise VerificationError("\n".join(all_failures))
 
 
+def check_invariants(fixture_dir: Path, results_dir: Path) -> None:
+    """Check relations that hold between cases of a single run.
+
+    compare-contracts checks one case across platforms; these checks compare
+    cases against each other on one platform, which is how an option that must
+    not change the answer gets verified.
+    """
+    manifest = load_json(fixture_dir / "manifest.json")
+    profiles = load_json(fixture_dir / "comparison.json")["profiles"]
+    failures: list[str] = []
+    for invariant in manifest.get("invariants", []):
+        invariant_id = invariant["id"]
+        results = [load_json(results_dir / f"{case}.json") for case in invariant["cases"]]
+        first, rest = results[0], results[1:]
+        first_case, rest_cases = invariant["cases"][0], invariant["cases"][1:]
+        if invariant["type"] == "identical_response":
+            for case, result in zip(rest_cases, rest):
+                differences: list[str] = []
+                compare_values(first, result, "", profiles["error"], differences)
+                failures.extend(
+                    f"{invariant_id}: {first_case} and {case} differ{difference}"
+                    for difference in differences
+                )
+        elif invariant["type"] == "equal_eta":
+            expected = first["trip"]["summary"]["time"]
+            for case, result in zip(rest_cases, rest):
+                actual = result["trip"]["summary"]["time"]
+                if actual != expected:
+                    failures.append(
+                        f"{invariant_id}: {case} reports {actual} seconds where "
+                        f"{first_case} reports {expected}"
+                    )
+        else:
+            raise SystemExit(f"Unknown invariant type: {invariant['type']}")
+    if failures:
+        raise VerificationError("\n".join(failures))
+
+
 def compare_performance(
     thresholds_path: Path,
     baseline_path: Path,
@@ -236,6 +274,10 @@ def main() -> int:
     contract_parser.add_argument("reference_dir", type=Path)
     contract_parser.add_argument("candidate_dir", type=Path)
 
+    invariant_parser = subparsers.add_parser("check-invariants")
+    invariant_parser.add_argument("fixture_dir", type=Path)
+    invariant_parser.add_argument("results_dir", type=Path)
+
     performance_parser = subparsers.add_parser("compare-performance")
     performance_parser.add_argument("thresholds", type=Path)
     performance_parser.add_argument("baseline", type=Path)
@@ -247,6 +289,8 @@ def main() -> int:
             validate_fixtures(args.fixture_dir)
         elif args.command == "compare-contracts":
             compare_contracts(args.fixture_dir, args.reference_dir, args.candidate_dir)
+        elif args.command == "check-invariants":
+            check_invariants(args.fixture_dir, args.results_dir)
         else:
             compare_performance(args.thresholds, args.baseline, args.candidate)
     except VerificationError as error:

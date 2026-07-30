@@ -54,6 +54,29 @@ python3 contract-tests/tools/verify.py compare-performance \
   path/to/baseline.json path/to/candidate.json
 ```
 
+## Single-run invariants
+
+`manifest.json` also carries `invariants`: relations that must hold between cases of one
+run. `compare-contracts` checks one case against the other platform, so it cannot express
+"these two cases must agree with each other". Both platform jobs run:
+
+```sh
+python3 contract-tests/tools/verify.py check-invariants \
+  contract-tests/fixtures path/to/results
+```
+
+Two are defined, both for `motor_scooter.avoid_multi_lane_right_turns`. Omitting the
+option must produce exactly the response disabling it produces, because `false` is the
+default (`src/sif/motorscootercost.cc` parses it with `JSON_PBF_DEFAULT_V2(co, false, ...)`).
+And all three states must report the same ETA seconds: the penalty is added to search cost
+only, never to elapsed time — the engine adds it as `c.cost += kMultiLaneRightTurnPenalty`
+with `c.secs` untouched.
+
+Note what this does not establish. On the Andorra fixture the three states return identical
+routes, so the ETA invariant holds trivially and the cases do not demonstrate that enabling
+the option ever changes a route. Showing that needs a fixture whose path contains a
+multi-lane right turn, which the current tile extract has not been shown to contain.
+
 ## Recorded baselines
 
 `contract-tests/baselines/<platform>.json` holds the measurement a CI run actually

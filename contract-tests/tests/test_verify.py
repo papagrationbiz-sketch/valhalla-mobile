@@ -117,6 +117,50 @@ class ContractVerifierTests(unittest.TestCase):
             with self.assertRaises(verify.VerificationError):
                 verify.compare_performance(*paths)
 
+    def _run_invariants(self, invariants, responses):
+        with tempfile.TemporaryDirectory() as directory:
+            fixture_dir = Path(directory) / "fixtures"
+            results_dir = Path(directory) / "results"
+            fixture_dir.mkdir()
+            results_dir.mkdir()
+            manifest = {"schema_version": 1, "cases": [], "invariants": invariants}
+            (fixture_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            (fixture_dir / "comparison.json").write_text(
+                json.dumps({"profiles": {"error": {"ignore_paths": [], "numeric_tolerances": {}}}}),
+                encoding="utf-8",
+            )
+            for case, response in responses.items():
+                (results_dir / f"{case}.json").write_text(json.dumps(response), encoding="utf-8")
+            verify.check_invariants(fixture_dir, results_dir)
+
+    def test_equal_eta_invariant(self):
+        """The avoid_multi_lane_right_turns penalty is added to search cost only,
+        so enabling it must not move the reported ETA."""
+        invariants = [
+            {"id": "eta", "type": "equal_eta", "cases": ["omitted", "enabled"]},
+        ]
+
+        def response(time):
+            return {"trip": {"summary": {"time": time, "length": 7.5}}}
+
+        self._run_invariants(invariants, {"omitted": response(660.2), "enabled": response(660.2)})
+        with self.assertRaises(verify.VerificationError):
+            self._run_invariants(
+                invariants, {"omitted": response(660.2), "enabled": response(661.2)}
+            )
+
+    def test_identical_response_invariant(self):
+        """Omitting the option has to behave exactly like disabling it, since
+        false is the documented default."""
+        invariants = [
+            {"id": "default", "type": "identical_response", "cases": ["omitted", "disabled"]},
+        ]
+        same = {"trip": {"summary": {"time": 660.2}, "legs": [{"shape": "abc"}]}}
+        other = {"trip": {"summary": {"time": 660.2}, "legs": [{"shape": "xbc"}]}}
+        self._run_invariants(invariants, {"omitted": same, "disabled": dict(same)})
+        with self.assertRaises(verify.VerificationError):
+            self._run_invariants(invariants, {"omitted": same, "disabled": other})
+
     def _run_performance(self, thresholds, baseline, candidate):
         with tempfile.TemporaryDirectory() as directory:
             directory_path = Path(directory)
