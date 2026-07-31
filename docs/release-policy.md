@@ -72,9 +72,27 @@ Before creating the final `0.6.0` tag:
    platforms/ABIs, and known limitations.
 10. The downstream GenNavi update freeze described below is merged before the final tag is
     published.
+11. The Android assets listed under Distribution are attached to the release.
 
 Draft releases or prerelease versions are used for validation. A final release is not published
 from an uncommitted manifest or a moving branch reference.
+
+## Attaching the Android assets
+
+`release.yml` builds and attaches only the Apple artifact. The AAR is built separately by
+`android-release.yml`, which takes an existing tag, so it has to be run after the tag exists:
+
+```sh
+gh workflow run android-release.yml --ref <tag> \
+  -f release_tag=<tag> -f attach_to_release=true
+```
+
+Skipping this leaves the release with the XCFramework alone. Swift Package Manager still resolves,
+so nothing appears broken from the iOS side, but Android consumers have no published artifact to
+depend on — `0.6.0` shipped that way and its AAR had to be attached by hand afterwards.
+
+The attach step accepts a published release, not only a draft. A tag validated as a prerelease and
+then promoted is past the draft stage by the time the Android assets are built.
 
 ## GenNavi Update Freeze
 

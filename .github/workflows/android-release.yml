@@ -8,8 +8,8 @@ on:
         required: true
         default: "0.6.0"
         type: string
-      attach_to_draft_release:
-        description: "Attach verified assets to the existing draft release"
+      attach_to_release:
+        description: "Attach the verified assets to that release"
         required: true
         default: false
         type: boolean
@@ -75,12 +75,17 @@ jobs:
           path: release
           if-no-files-found: error
 
-      - name: Attach to existing draft release
-        if: inputs.attach_to_draft_release
+      # Attaching is not restricted to drafts: the Android assets are built
+      # from an existing tag, and a release is often already published by the
+      # time they are. 0.6.0 shipped without its AAR because this step only
+      # accepted drafts, leaving consumers to pull it out of a workflow
+      # artifact instead.
+      - name: Attach to the release
+        if: inputs.attach_to_release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.release_tag }}
         shell: bash
         run: |
-          test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = "true"
-          gh release upload "$RELEASE_TAG" release/*
+          gh release view "$RELEASE_TAG" >/dev/null
+          gh release upload "$RELEASE_TAG" release/* --clobber
