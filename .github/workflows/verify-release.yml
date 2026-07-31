@@ -1,0 +1,36 @@
+name: Verify a published release
+
+# Release policy precondition 5: Swift Package Manager resolves the release
+# artifact and validates its checksum. That can only be checked once the release
+# exists and its asset is reachable, so this runs on demand against a version
+# rather than as part of cutting one.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        description: "The published version to verify, e.g. 0.6.0"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    name: Resolve ${{ inputs.version }} through SPM
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "16.4.0"
+
+      # A warm SPM cache would let a stale artifact satisfy the resolve, which
+      # is the opposite of what this job is for.
+      - name: Clear the SPM artifact cache
+        run: rm -rf ~/Library/Caches/org.swift.swiftpm
+
+      - name: Resolve and validate the checksum
+        run: ./scripts/verify_spm_release.sh "${{ inputs.version }}"
