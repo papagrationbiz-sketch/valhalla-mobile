@@ -1,0 +1,109 @@
+name: iOS build verification
+
+# Proves a clean checkout still builds every shipped iOS variant, which is a
+# 0.6.0 release precondition. release.yml builds the same slices but goes on to
+# bump the version, tag, force-push and publish, so it cannot be used to answer
+# "does this still build" without cutting a release.
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/ios-build.yml"
+      - "Package.swift"
+      - "apple/**"
+      - "src"
+      - "build.sh"
+      - "scripts/build_apple.sh"
+      - "scripts/create_xcframework.sh"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }}
+    runs-on: macos-15
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: ["arm64-ios", "arm64-ios-simulator", "x64-ios-simulator"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "16.4.0"
+
+      # build.sh picks up ./vcpkg from the working directory on its own, so the
+      # clone has to land in the repository root rather than the runner temp.
+      - name: Set up vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg
+          git -C vcpkg checkout 2025.10.17
+          ./vcpkg/bootstrap-vcpkg.sh
+
+      - name: Build ${{ matrix.arch }}
+        run: ./build.sh --ios ${{ matrix.arch }}
+
+      - name: Upload install tree
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-${{ matrix.arch }}
+          path: build/apple/${{ matrix.arch }}/install
+          if-no-files-found: error
+
+  xcframework:
+    name: Assemble XCFramework
+    needs: build
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "16.4.0"
+
+      - name: Download the built slices
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ios-build-*
+          path: downloaded
+
+      # create_xcframework.sh reads build/apple/<arch>/install, which is the
+      # layout the artifacts were uploaded from.
+      - name: Restore the slice layout
+        run: |
+          for arch in arm64-ios arm64-ios-simulator x64-ios-simulator; do
+            mkdir -p "build/apple/${arch}"
+            mv "downloaded/ios-build-${arch}" "build/apple/${arch}/install"
+          done
+
+      - name: Assemble
+        run: ./scripts/create_xcframework.sh
+
+      - name: Check the XCFramework carries a device and a simulator slice
+        shell: bash
+        run: |
+          plist=build/apple/valhalla-wrapper.xcframework/Info.plist
+          test -f "$plist"
+          identifiers=$(
+            /usr/libexec/PlistBuddy -c "Print :AvailableLibraries" "$plist" \
+              | sed -n 's/.*LibraryIdentifier = //p' | sort
+          )
+          echo "Slices:"
+          printf '%s\n' "$identifiers" | sed 's/^/  /'
+          total=$(printf '%s\n' "$identifiers" | wc -l | tr -d ' ')
+          simulators=$(printf '%s\n' "$identifiers" | grep -c simulator || true)
+          # Exactly two slices, exactly one of them a simulator, so the other is
+          # the device slice.
+          test "$total" = "2"
+          test "$simulators" = "1"
