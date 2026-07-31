@@ -1,0 +1,54 @@
+name: Release script checks
+
+# The release scripts are only reachable through workflow_dispatch, so nothing
+# else exercises them on a pull request. A regression in the version guard would
+# otherwise be found by tagging the wrong release.
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/release-scripts.yml"
+      - "scripts/version_bump.sh"
+      - "scripts/generate_release_notes.sh"
+      - "scripts/tests/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check the release scripts
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Check the version bump guard
+        run: ./scripts/tests/test_version_bump.sh
+
+      # Precondition 9 lists what the notes must carry, so the absence of any of
+      # it should fail here rather than be noticed while reading a release page.
+      - name: Check the release notes carry the required sections
+        shell: bash
+        run: |
+          printf 'placeholder artifact\n' > artifact.zip
+          ./scripts/generate_release_notes.sh 9.9.9 artifact.zip notes.md
+          cat notes.md
+          for required in \
+            "Repository commit" \
+            "Valhalla submodule commit" \
+            "XCFramework SHA-256" \
+            "## Artifacts" \
+            "## Supported platforms" \
+            "## Known limitations"
+          do
+            grep -qF "$required" notes.md || {
+              echo "Release notes are missing: $required" >&2
+              exit 1
+            }
+          done
+          # The commits have to be the real ones, not empty interpolations.
+          grep -qF "$(git rev-parse HEAD)" notes.md
+          grep -qF "$(git rev-parse HEAD:src/valhalla)" notes.md
