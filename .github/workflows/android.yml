@@ -452,5 +452,5 @@ jobs:
             scripts/create_xcframework.sh \
             scripts/write_xcframework_spm.sh \
             version.txt
-          test "$(git rev-parse HEAD:src/valhalla)" = "9d8b22b3176207019d5d94c5b22860db4e8dc351"
+          test "$(git rev-parse HEAD:src/valhalla)" = "cab9e84b48bf1e1fb7ac162004c95fbbbc49280c"
           swift package dump-package >/dev/null
