@@ -440,14 +440,17 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         shell: bash
         run: |
+          # The submodule is guarded by the SHA pin below rather than by this diff:
+          # both assert the same thing, and keeping it here would make an intentional
+          # engine change unmergeable instead of merely deliberate. Advancing the pin
+          # is now the single way to move what the XCFramework is built from.
           git diff --exit-code "$BASE_SHA"...HEAD -- \
             Package.swift \
             apple/Sources \
-            src \
             .github/workflows/release.yml \
             scripts/build_apple.sh \
             scripts/create_xcframework.sh \
             scripts/write_xcframework_spm.sh \
             version.txt
-          test "$(git rev-parse HEAD:src/valhalla)" = "13eb61624f9b6464dbaad5081e9fd71207ec539c"
+          test "$(git rev-parse HEAD:src/valhalla)" = "9d8b22b3176207019d5d94c5b22860db4e8dc351"
           swift package dump-package >/dev/null
