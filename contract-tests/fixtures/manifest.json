@@ -94,6 +94,12 @@
       "endpoint": "route",
       "request": "requests/route-motor-scooter-primary-only.json",
       "comparison_profile": "route"
+    },
+    {
+      "id": "route-motor-scooter-low-class-penalty",
+      "endpoint": "route",
+      "request": "requests/route-motor-scooter-low-class-penalty.json",
+      "comparison_profile": "route"
     }
   ],
   "invariants": [
