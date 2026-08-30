@@ -11,6 +11,10 @@ import ValhallaConfigModels
 /// Note: `valhalla_commit` is deliberately NOT emitted here. CI injects it
 /// after the fact (it knows the commit the wrapper binary was built from).
 final class PerformanceTests: XCTestCase {
+    /// How many fresh instances the cold measurement averages over. Enough to pull the
+    /// median off a single draw without materially lengthening the job.
+    private static let coldIterations = 10
+
     func testPerformanceBaseline() throws {
         let manifest = try ContractFixtures.loadManifest()
         let outputDir = try ContractFixtures.ensureOutputDir()
@@ -18,14 +22,30 @@ final class PerformanceTests: XCTestCase {
         let requestJSON = try ContractFixtures.loadRequest("requests/route-auto.json")
         let config = try ContractFixtures.makeConfig()
 
-        // Cold call: first route() on a freshly constructed instance. Its
-        // response isn't part of the 100-iteration `failures` count below;
-        // it's only used to compute `cold_route_ms`.
-        let valhalla = try Valhalla(config)
-        let coldStart = DispatchTime.now()
-        _ = valhalla.route(rawRequest: requestJSON)
-        let coldEnd = DispatchTime.now()
-        let coldRouteMs = Self.milliseconds(from: coldStart, to: coldEnd)
+        // Cold calls: the first route() on a freshly constructed instance, repeated
+        // on a new instance each time and reduced to a median.
+        //
+        // A single cold sample was measured at 5.4-11.6 ms for one unchanged binary,
+        // so comparing one sample against a threshold of baseline + 25% + 1 ms
+        // reported regressions that a controlled A/B could not reproduce, and would
+        // equally have hidden a real one. Their responses are not part of the
+        // 100-iteration `failures` count below.
+        //
+        // Android measures a single cold sample and is deliberately left alone; its
+        // tree is frozen, so the two baselines are not compared to each other.
+        var coldDurationsMs: [Double] = []
+        coldDurationsMs.reserveCapacity(Self.coldIterations)
+        var valhalla = try Valhalla(config)
+        for iteration in 0..<Self.coldIterations {
+            if iteration > 0 {
+                valhalla = try Valhalla(config)
+            }
+            let coldStart = DispatchTime.now()
+            _ = valhalla.route(rawRequest: requestJSON)
+            let coldEnd = DispatchTime.now()
+            coldDurationsMs.append(Self.milliseconds(from: coldStart, to: coldEnd))
+        }
+        let coldRouteMs = Self.median(of: coldDurationsMs)
 
         // Warm calls: 100 further calls on the SAME instance.
         var failures = 0

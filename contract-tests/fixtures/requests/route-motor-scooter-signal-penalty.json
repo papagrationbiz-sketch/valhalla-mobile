@@ -1,0 +1,14 @@
+{
+  "locations": [
+    {"lat": 42.5063, "lon": 1.5218},
+    {"lat": 42.5349, "lon": 1.5803}
+  ],
+  "costing": "motor_scooter",
+  "costing_options": {
+    "motor_scooter": {
+      "traffic_signal_penalty": 60,
+      "stop_sign_penalty": 30
+    }
+  },
+  "units": "kilometers"
+}

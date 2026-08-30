@@ -70,6 +70,18 @@
         "reuse_count": 100,
         "reinitialize_after": true
       }
+    },
+    {
+      "id": "route-motor-scooter-signal-penalty",
+      "endpoint": "route",
+      "request": "requests/route-motor-scooter-signal-penalty.json",
+      "comparison_profile": "route"
+    },
+    {
+      "id": "route-motor-scooter-signal-penalty-zero",
+      "endpoint": "route",
+      "request": "requests/route-motor-scooter-signal-penalty-zero.json",
+      "comparison_profile": "route"
     }
   ],
   "invariants": [
@@ -91,6 +103,15 @@
         "route-motor-scooter-enabled"
       ],
       "description": "The opt-in penalty is added to search cost only and must not alter reported ETA seconds."
+    },
+    {
+      "id": "signal-penalty-default",
+      "type": "identical_response",
+      "cases": [
+        "route-motor-scooter",
+        "route-motor-scooter-signal-penalty-zero"
+      ],
+      "description": "traffic_signal_penalty and stop_sign_penalty default to 0, so omitting them must match setting them to 0. Enabling them is expected to change the route where a signal can be avoided, which is why there is no equal_eta invariant for them: the multi-lane right turn case only holds ETA steady because no fixture route contains a penalised turn."
     }
   ]
 }
