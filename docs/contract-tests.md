@@ -97,8 +97,19 @@ run-to-run movement. They were previously set for placeholder numbers roughly fo
 slower, which left Android `cold_route_ms` with 253% headroom — a doubling passed.
 
 Update a baseline only when a change is meant to move the numbers, and say why in the
-commit. The calibration rests on a single CI sample per platform, so the noise allowance
-is an estimate until several runs have been recorded.
+commit.
+
+The iOS numbers are the median of twenty recorded CI runs, and the slacks are set to
+cover the p95 of those runs. That is wide, and deliberately so: the same commit measured
+on different CI runners produces `warm_route_ms_p50` anywhere from 1.85 ms to 4.69 ms,
+a spread of nearly 2x. `cold_route_ms` was a single route call and swung further still,
+which is why it now takes the median of ten fresh instances.
+
+The consequence is worth stating plainly: with runner-to-runner variance that wide, an
+absolute threshold cannot reject a doubling without also rejecting unchanged code. These
+thresholds catch a gross regression and nothing subtler. Detecting a real 20-30% change
+needs candidate and baseline measured on the SAME runner in one job, which this harness
+does not do yet.
 
 ## Integration dependency
 

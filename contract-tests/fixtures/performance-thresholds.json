@@ -20,10 +20,10 @@
     "ios": {
       "metrics": {
         "cold_route_ms": {
-          "absolute_slack": 1.0
+          "absolute_slack": 2.7
         },
         "warm_route_ms_p50": {
-          "absolute_slack": 0.6
+          "absolute_slack": 2.1
         }
       }
     }
