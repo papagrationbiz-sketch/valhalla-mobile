@@ -82,6 +82,24 @@
       "endpoint": "route",
       "request": "requests/route-motor-scooter-signal-penalty-zero.json",
       "comparison_profile": "route"
+    },
+    {
+      "id": "route-motor-scooter-avoid-arterials",
+      "endpoint": "route",
+      "request": "requests/route-motor-scooter-avoid-arterials.json",
+      "comparison_profile": "route"
+    },
+    {
+      "id": "route-motor-scooter-primary-only",
+      "endpoint": "route",
+      "request": "requests/route-motor-scooter-primary-only.json",
+      "comparison_profile": "route"
+    },
+    {
+      "id": "route-motor-scooter-low-class-penalty",
+      "endpoint": "route",
+      "request": "requests/route-motor-scooter-low-class-penalty.json",
+      "comparison_profile": "route"
     }
   ],
   "invariants": [
